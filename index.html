@@ -65,7 +65,7 @@
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: clamp(28px, 5vmin, 56px);
+      padding: clamp(34px, 6vmin, 67px);
       box-sizing: border-box;
     }
 
@@ -103,7 +103,7 @@
       background: var(--nm-base-off);
       box-shadow: none;
       border: 1px solid rgba(163, 177, 197, 0.32);
-      padding: 18px 20px 20px;
+      padding: 22px 20px 24px;
       gap: 12px;
     }
 
@@ -156,7 +156,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding: 8px 9px;
+      padding: 8px 9px 14px;
       border-radius: var(--radius-sm);
       background: var(--nm-base-off);
       box-shadow: var(--nm-inset);
@@ -536,11 +536,13 @@
       z-index: 1;
     }
 
-    .panel__section--download {
+    .panel__actions-floating {
       margin-top: auto;
-      padding-top: 2px;
       flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
+      padding-top: 6px;
     }
 
     .bg-color-wrap {
@@ -611,7 +613,7 @@
         overflow: hidden;
       }
       .app-shell {
-        padding: clamp(18px, 4vmin, 28px);
+        padding: clamp(22px, 4.8vmin, 34px);
       }
       .app-layout {
         grid-template-columns: 1fr;
@@ -632,7 +634,7 @@
         overflow-y: auto;
       }
       .panel__section {
-        padding: 6px 7px;
+        padding: 6px 7px 11px;
         gap: 5px;
       }
       .mirror-axis-btn {
@@ -728,10 +730,10 @@
       </fieldset>
     </div>
 
-    <div class="panel__section panel__section--download">
+    <div class="panel__actions-floating">
       <div class="bg-color-wrap">
         <button type="button" class="tool-btn tool-btn--block" id="btn-bg-color" aria-expanded="false" aria-controls="bg-popover">
-          Background color
+          Change background color
         </button>
         <div class="bg-popover" id="bg-popover" role="group" aria-label="Canvas background">
           <div class="bg-grid" id="bg-grid"></div>
