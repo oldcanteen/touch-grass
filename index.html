@@ -57,15 +57,15 @@
       position: fixed;
       inset: 0;
       z-index: -1;
-      background: url("assets/bliss.png") center / cover no-repeat;
-      background-color: #3d7a4a;
+      background: url("assets/background.png") center / cover no-repeat;
+      background-color: #5bb8d9;
     }
 
     .app-shell {
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: clamp(20px, 4vmin, 44px);
+      padding: clamp(28px, 5vmin, 56px);
       box-sizing: border-box;
     }
 
@@ -73,36 +73,25 @@
       width: min(1120px, 100%);
       max-height: 100%;
       margin: 0 auto;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) min(288px, 34vw);
+      grid-template-rows: minmax(0, 1fr);
+      column-gap: clamp(13px, 2.4vmin, 24px);
+      row-gap: 0;
       flex: 1;
       min-height: 0;
     }
 
-    .app-brand {
-      margin: 0 0 14px;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      font-size: clamp(1.35rem, 3.2vw, 1.95rem);
-      font-weight: 750;
-      letter-spacing: 0.04em;
-      text-transform: lowercase;
-      color: #ffffff;
-      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
-      line-height: 1.1;
-      flex-shrink: 0;
+    .app-layout > .major-card--canvas {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: stretch;
     }
 
-    .app-frame {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      gap: 14px;
-      padding: clamp(12px, 2vmin, 18px);
-      border-radius: calc(var(--radius) + 4px);
-      background: var(--nm-base);
-      box-shadow: var(--nm-raise-lg), inset 1px 1px 0 rgba(255, 255, 255, 0.65);
+    .app-layout > .major-card--controls {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: stretch;
     }
 
     .major-card {
@@ -112,9 +101,10 @@
       min-height: 0;
       border-radius: var(--radius);
       background: var(--nm-base-off);
-      box-shadow: var(--nm-inset);
-      padding: 12px 14px 14px;
-      gap: 10px;
+      box-shadow: none;
+      border: 1px solid rgba(163, 177, 197, 0.32);
+      padding: 18px 20px 20px;
+      gap: 12px;
     }
 
     .major-card__title {
@@ -128,11 +118,11 @@
     }
 
     .major-card--canvas {
-      flex: 1 1 62%;
+      min-width: 0;
     }
 
     .major-card--controls {
-      flex: 0 0 min(288px, 34vw);
+      min-width: 0;
     }
 
     /* --- Control panel (inside card) — neumorphism --- */
@@ -529,8 +519,8 @@
       position: relative;
       border-radius: var(--radius-sm);
       overflow: hidden;
-      background: var(--nm-base);
-      box-shadow: var(--ui-raise);
+      background: var(--nm-base-off);
+      box-shadow: var(--nm-inset);
       border: none;
     }
 
@@ -621,20 +611,21 @@
         overflow: hidden;
       }
       .app-shell {
-        padding: 12px;
+        padding: clamp(18px, 4vmin, 28px);
       }
-      .app-frame {
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
+      .app-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(160px, 1fr) auto;
+        column-gap: 0;
+        row-gap: clamp(8px, 1.8vmin, 12px);
       }
-      .major-card--canvas {
-        flex: 1 1 0;
-        min-height: 180px;
+      .app-layout > .major-card--canvas {
+        grid-column: 1;
+        grid-row: 1;
       }
-      .major-card--controls {
-        flex: 0 0 auto;
+      .app-layout > .major-card--controls {
+        grid-column: 1;
+        grid-row: 2;
         max-height: 46vh;
       }
       .panel {
@@ -657,17 +648,15 @@
 <body>
   <div class="app-shell">
     <div class="app-layout">
-      <h1 class="app-brand">touch grass</h1>
-      <div class="app-frame">
-        <section class="major-card major-card--canvas" aria-labelledby="canvas-card-heading">
+      <section class="major-card major-card--canvas" aria-labelledby="canvas-card-heading">
           <h2 id="canvas-card-heading" class="major-card__title">Canvas</h2>
           <div class="canvas-shell" id="canvas-shell">
             <canvas id="draw-canvas" width="800" height="600"></canvas>
             <svg id="mirror-guide" class="mirror-guide" aria-hidden="true"></svg>
           </div>
-        </section>
+      </section>
 
-        <section class="major-card major-card--controls" aria-labelledby="controls-card-heading">
+      <section class="major-card major-card--controls" aria-labelledby="controls-card-heading">
           <h2 id="controls-card-heading" class="major-card__title">Control panel</h2>
           <aside class="panel" aria-label="Control panel tools">
 
@@ -753,8 +742,7 @@
       </button>
     </div>
           </aside>
-        </section>
-      </div>
+      </section>
     </div>
   </div>
 
