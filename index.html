@@ -31,7 +31,6 @@
       --canvas-paper: #eef2f7;
       --radius: 11px;
       --radius-sm: 9px;
-      --panel-w: min(300px, 36vw);
       --font: "JetBrains Mono", ui-monospace, monospace;
       --dur-fast: 0.12s;
     }
@@ -50,35 +49,117 @@
       font-size: 12px;
       letter-spacing: 0.02em;
       overflow: hidden;
-      display: flex;
-      flex-direction: row-reverse;
+      position: relative;
     }
 
-    /* --- Control panel (right) — neumorphism --- */
-    .panel {
-      width: var(--panel-w);
-      flex-shrink: 0;
-      align-self: stretch;
-      height: calc(100vh - 24px);
-      max-height: calc(100vh - 24px);
-      background: var(--nm-base);
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: url("assets/bliss.png") center / cover no-repeat;
+      background-color: #3d7a4a;
+    }
+
+    .app-shell {
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: 10px 10px 12px;
-      gap: 8px;
-      overflow: visible;
-      box-shadow: var(--nm-raise-lg), inset 1px 0 0 rgba(255, 255, 255, 0.55);
-      border-radius: var(--radius) 0 0 var(--radius);
-      margin: 12px 12px 12px 6px;
+      padding: clamp(20px, 4vmin, 44px);
+      box-sizing: border-box;
     }
 
-    .panel__title {
+    .app-layout {
+      width: min(1120px, 100%);
+      max-height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .app-brand {
+      margin: 0 0 14px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: clamp(1.35rem, 3.2vw, 1.95rem);
+      font-weight: 750;
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+      color: #ffffff;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
+      line-height: 1.1;
+      flex-shrink: 0;
+    }
+
+    .app-frame {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 14px;
+      padding: clamp(12px, 2vmin, 18px);
+      border-radius: calc(var(--radius) + 4px);
+      background: var(--nm-base);
+      box-shadow: var(--nm-raise-lg), inset 1px 1px 0 rgba(255, 255, 255, 0.65);
+    }
+
+    .major-card {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      border-radius: var(--radius);
+      background: var(--nm-base-off);
+      box-shadow: var(--nm-inset);
+      padding: 12px 14px 14px;
+      gap: 10px;
+    }
+
+    .major-card__title {
       margin: 0;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.14em;
       color: var(--text);
+      line-height: 1.2;
+    }
+
+    .major-card--canvas {
+      flex: 1 1 62%;
+    }
+
+    .major-card--controls {
+      flex: 0 0 min(288px, 34vw);
+    }
+
+    /* --- Control panel (inside card) — neumorphism --- */
+    .panel {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      gap: 8px;
+      overflow-x: visible;
+      overflow-y: auto;
+      background: transparent;
+      box-shadow: none;
+      border-radius: 0;
+      margin: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .panel::-webkit-scrollbar-thumb {
+      background: rgba(47, 59, 76, 0.2);
+      border-radius: 99px;
     }
 
     .panel__section {
@@ -434,84 +515,30 @@
     .mirror-guide {
       position: absolute;
       left: 0;
-      top: 28px;
+      top: 0;
       width: 100%;
-      height: calc(100% - 28px);
+      height: 100%;
       pointer-events: none;
       z-index: 3;
       overflow: visible;
     }
 
-    /* --- Main workspace (left) — light, soft neumorphic accents --- */
-    .workspace {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0;
-      padding: 12px 12px 12px 14px;
-      gap: 8px;
-      background: var(--app-bg);
-    }
-
-    .mode-bar {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-      width: 100%;
-    }
-
-    .mode-bar__label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--text);
-    }
-
     .canvas-shell {
       flex: 1;
-      min-height: 0;
+      min-height: 200px;
       position: relative;
-      border-radius: var(--radius);
+      border-radius: var(--radius-sm);
       overflow: hidden;
       background: var(--nm-base);
-      box-shadow: var(--nm-raise-lg);
+      box-shadow: var(--ui-raise);
       border: none;
-    }
-
-    .canvas-shell__chrome {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 28px;
-      background: var(--nm-base);
-      box-shadow: 0 3px 8px rgba(163, 177, 197, 0.2);
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      gap: 8px;
-      font-size: 8px;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-      z-index: 2;
-      pointer-events: none;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.65);
-    }
-
-    .canvas-shell__chrome .canvas-title {
-      color: var(--text);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: none;
     }
 
     #draw-canvas {
       position: absolute;
-      inset: 28px 0 0 0;
+      inset: 0;
       width: 100%;
-      height: calc(100% - 28px);
+      height: 100%;
       display: block;
       cursor: crosshair;
       touch-action: none;
@@ -588,26 +615,30 @@
 
     @media (max-width: 720px) {
       body {
-        flex-direction: column;
         min-height: 100dvh;
         max-height: 100dvh;
         height: 100dvh;
         overflow: hidden;
       }
-      .panel {
-        width: calc(100% - 16px);
-        max-width: none;
-        height: auto;
-        max-height: none;
-        flex: 0 0 auto;
-        border-radius: var(--radius);
-        margin: 8px;
-        padding: 8px 8px 10px;
-        gap: 6px;
-        overflow: visible;
+      .app-shell {
+        padding: 12px;
       }
-      .panel__title {
-        font-size: 9px;
+      .app-frame {
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .major-card--canvas {
+        flex: 1 1 0;
+        min-height: 180px;
+      }
+      .major-card--controls {
+        flex: 0 0 auto;
+        max-height: 46vh;
+      }
+      .panel {
+        overflow-y: auto;
       }
       .panel__section {
         padding: 6px 7px;
@@ -620,21 +651,25 @@
       .swatch-grid {
         gap: 5px;
       }
-      .workspace {
-        flex: 1 1 0;
-        min-height: 0;
-        padding: 8px;
-        margin: 0 8px 8px;
-      }
-      :root {
-        --panel-w: 100%;
-      }
     }
   </style>
 </head>
 <body>
-  <aside class="panel" aria-label="Control panel">
-    <h1 class="panel__title">Control panel</h1>
+  <div class="app-shell">
+    <div class="app-layout">
+      <h1 class="app-brand">touch grass</h1>
+      <div class="app-frame">
+        <section class="major-card major-card--canvas" aria-labelledby="canvas-card-heading">
+          <h2 id="canvas-card-heading" class="major-card__title">Canvas</h2>
+          <div class="canvas-shell" id="canvas-shell">
+            <canvas id="draw-canvas" width="800" height="600"></canvas>
+            <svg id="mirror-guide" class="mirror-guide" aria-hidden="true"></svg>
+          </div>
+        </section>
+
+        <section class="major-card major-card--controls" aria-labelledby="controls-card-heading">
+          <h2 id="controls-card-heading" class="major-card__title">Control panel</h2>
+          <aside class="panel" aria-label="Control panel tools">
 
     <div class="panel__section">
       <div class="panel__label">History</div>
@@ -717,21 +752,11 @@
         Download PNG
       </button>
     </div>
-  </aside>
-
-  <main class="workspace">
-    <div class="mode-bar">
-      <span class="mode-bar__label">Touch Grass</span>
-    </div>
-
-    <div class="canvas-shell" id="canvas-shell">
-      <div class="canvas-shell__chrome">
-        <span class="canvas-title">Canvas</span>
+          </aside>
+        </section>
       </div>
-      <canvas id="draw-canvas" width="800" height="600"></canvas>
-      <svg id="mirror-guide" class="mirror-guide" aria-hidden="true"></svg>
     </div>
-  </main>
+  </div>
 
   <script>
     (function () {
