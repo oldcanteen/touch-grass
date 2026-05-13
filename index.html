@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Touch Grass · Emoji Canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --nm-base: #e4e9f0;
+      --nm-base-off: #dce3ec;
+      --nm-shadow-d-soft: rgba(163, 177, 197, 0.42);
+      --nm-shadow-d-soft-lg: rgba(163, 177, 197, 0.32);
+      --nm-highlight: rgba(255, 255, 255, 0.9);
+      --ui-raise: 4px 4px 10px var(--nm-shadow-d-soft-lg), -3px -3px 9px var(--nm-highlight);
+      --ui-raise-hover: 5px 5px 12px rgba(163, 177, 197, 0.38), -4px -4px 11px rgba(255, 255, 255, 0.95);
+      --ui-inset: inset 3px 3px 8px var(--nm-shadow-d-soft-lg), inset -2px -2px 6px rgba(255, 255, 255, 0.88);
+      --ui-inset-deep: inset 4px 4px 10px rgba(163, 177, 197, 0.45), inset -2px -2px 7px rgba(255, 255, 255, 0.75);
+      --ui-pressed: inset 0 4px 10px rgba(120, 130, 148, 0.22), inset 0 -2px 6px rgba(255, 255, 255, 0.55);
+      --nm-raise: var(--ui-raise);
+      --nm-raise-lg: 6px 6px 16px var(--nm-shadow-d-soft-lg), -5px -5px 14px var(--nm-highlight);
+      --nm-inset: var(--ui-inset);
+      --nm-inset-deep: var(--ui-inset-deep);
+      --app-bg: #e8edf3;
+      --text: #2f3b4c;
+      --text-muted: #6b7a8f;
+      --accent: #4a7ad4;
+      --accent-soft: #e8effc;
+      --canvas-paper: #eef2f7;
+      --radius: 11px;
+      --radius-sm: 9px;
+      --panel-w: min(300px, 36vw);
+      --font: "JetBrains Mono", ui-monospace, monospace;
+      --dur-fast: 0.12s;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--app-bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      overflow: hidden;
+      display: flex;
+      flex-direction: row-reverse;
+    }
+
+    /* --- Control panel (right) — neumorphism --- */
+    .panel {
+      width: var(--panel-w);
+      flex-shrink: 0;
+      align-self: stretch;
+      height: calc(100vh - 24px);
+      max-height: calc(100vh - 24px);
+      background: var(--nm-base);
+      display: flex;
+      flex-direction: column;
+      padding: 10px 10px 12px;
+      gap: 8px;
+      overflow: visible;
+      box-shadow: var(--nm-raise-lg), inset 1px 0 0 rgba(255, 255, 255, 0.55);
+      border-radius: var(--radius) 0 0 var(--radius);
+      margin: 12px 12px 12px 6px;
+    }
+
+    .panel__title {
+      margin: 0;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text);
+    }
+
+    .panel__section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 9px;
+      border-radius: var(--radius-sm);
+      background: var(--nm-base-off);
+      box-shadow: var(--nm-inset);
+      flex-shrink: 0;
+      overflow: visible;
+    }
+
+    .panel__section > .panel__label:first-child {
+      margin-bottom: 14px;
+    }
+
+    .panel__label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Palette — 3×3 soft UI swatches */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .tool-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tool-btn {
+      flex: 1;
+      font-family: inherit;
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 7px 6px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--nm-base);
+      color: var(--text-muted);
+      cursor: pointer;
+      box-shadow: var(--ui-raise);
+      transition: box-shadow var(--dur-fast), color var(--dur-fast), transform 0.08s ease, filter var(--dur-fast);
+    }
+
+    .tool-btn:hover {
+      color: var(--text);
+      box-shadow: var(--ui-raise-hover);
+    }
+
+    .tool-btn:active {
+      box-shadow: var(--ui-pressed);
+      transform: translateY(1px);
+      filter: brightness(0.96);
+    }
+
+    .tool-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: var(--ui-inset);
+      transform: none;
+      filter: none;
+    }
+
+    .tool-btn--glyph {
+      flex: 0 0 auto;
+      min-width: 40px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .tool-btn--glyph .tool-btn__glyph {
+      display: block;
+      transform: translateY(1px);
+    }
+
+    .tool-btn--block {
+      width: 100%;
+    }
+
+    .swatch {
+      aspect-ratio: 2 / 1;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      z-index: 0;
+      transition: transform 0.1s ease, box-shadow var(--dur-fast), filter 0.1s ease;
+      background-clip: padding-box;
+      background-origin: border-box;
+      box-shadow: var(--ui-raise), inset 1px 1px 1px rgba(255, 255, 255, 0.5);
+    }
+
+    .swatch:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--ui-raise-hover), inset 1px 1px 1px rgba(255, 255, 255, 0.55);
+    }
+
+    .swatch:focus {
+      outline: none;
+    }
+
+    .swatch:focus-visible {
+      outline: 2px solid #1a1816;
+      outline-offset: 2px;
+    }
+
+    .swatch:active {
+      transform: scale(0.98);
+      filter: brightness(0.92);
+      box-shadow: var(--ui-pressed);
+    }
+
+    .swatch[data-active="true"] {
+      box-shadow: var(--ui-inset-deep), 0 0 0 2px #1a1816;
+      transform: translateY(1px);
+      z-index: 1;
+    }
+
+    .swatch[data-active="true"]:hover {
+      transform: translateY(0);
+      box-shadow: var(--ui-raise-hover), 0 0 0 2px #1a1816;
+    }
+
+    .swatch[data-active="true"]:active {
+      transform: scale(0.98);
+      box-shadow: var(--ui-pressed), 0 0 0 2px #1a1816;
+    }
+
+    .swatch--bleach {
+      box-shadow: var(--ui-raise), inset 1px 1px 1px rgba(255, 255, 255, 0.55), 0 0 0 1px rgba(47, 59, 76, 0.12);
+    }
+
+    .swatch--bleach[data-active="true"] {
+      box-shadow: var(--ui-inset-deep), 0 0 0 2px #1a1816;
+    }
+
+    .mirror-fieldset {
+      border: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mirror-fieldset legend {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 0;
+      margin-bottom: 14px;
+    }
+
+    .mirror-axis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .mirror-axis-btn {
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 6px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--nm-base);
+      color: var(--text-muted);
+      cursor: pointer;
+      box-shadow: var(--ui-raise);
+      transition: box-shadow var(--dur-fast), color var(--dur-fast), transform 0.08s ease, filter var(--dur-fast);
+    }
+
+    .mirror-axis-btn .mirror-axis-icon {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .mirror-axis-btn:hover:not(:disabled) {
+      color: var(--text);
+      box-shadow: var(--ui-raise-hover);
+    }
+
+    .mirror-axis-btn:active:not(:disabled) {
+      transform: translateY(1px);
+      filter: brightness(0.96);
+      box-shadow: var(--ui-pressed);
+    }
+
+    .mirror-axis-btn[data-active="true"] {
+      color: var(--text);
+      box-shadow: var(--ui-inset-deep);
+    }
+
+    .mirror-axis-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: var(--ui-inset);
+      transform: none;
+      filter: none;
+    }
+
+    .mirror-axis-btn:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Brush sliders */
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .slider-row header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .slider-row .value {
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--nm-base);
+      border-radius: 999px;
+      border: none;
+      box-shadow: var(--ui-inset);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffffff, var(--nm-base-off));
+      box-shadow: var(--ui-raise);
+      border: none;
+      cursor: grab;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffffff, var(--nm-base-off));
+      box-shadow: var(--ui-raise);
+      border: none;
+      cursor: grab;
+    }
+
+    .slider-row--tight {
+      margin-top: 4px;
+    }
+
+    /* Toggle row */
+    .toggle-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--nm-base);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      box-shadow: var(--ui-raise);
+      color: var(--text);
+      transition: box-shadow var(--dur-fast), transform 0.08s ease, filter var(--dur-fast);
+    }
+
+    .toggle:hover {
+      box-shadow: var(--ui-raise-hover);
+    }
+
+    .toggle:active {
+      box-shadow: var(--ui-pressed);
+      transform: translateY(1px);
+      filter: brightness(0.96);
+    }
+
+    .toggle__text {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .toggle__switch {
+      width: 38px;
+      height: 21px;
+      background: var(--nm-base-off);
+      border-radius: 999px;
+      position: relative;
+      box-shadow: var(--ui-inset);
+      transition: box-shadow 0.15s;
+    }
+
+    .toggle__switch::after {
+      content: "";
+      position: absolute;
+      width: 17px;
+      height: 17px;
+      top: 2px;
+      left: 3px;
+      background: linear-gradient(145deg, #ffffff, var(--nm-base-off));
+      border-radius: 50%;
+      box-shadow: var(--ui-raise);
+      transition: transform 0.18s ease;
+    }
+
+    .toggle[data-on="true"] .toggle__switch {
+      background: var(--accent-soft);
+      box-shadow: var(--ui-inset);
+    }
+
+    .toggle[data-on="true"] .toggle__switch::after {
+      transform: translateX(15px);
+      background: linear-gradient(145deg, #9aaee0, var(--accent));
+      box-shadow: 2px 2px 5px rgba(74, 122, 212, 0.32), -1px -1px 3px rgba(255, 255, 255, 0.9);
+    }
+
+    .mirror-guide {
+      position: absolute;
+      left: 0;
+      top: 28px;
+      width: 100%;
+      height: calc(100% - 28px);
+      pointer-events: none;
+      z-index: 3;
+      overflow: visible;
+    }
+
+    /* --- Main workspace (left) — light, soft neumorphic accents --- */
+    .workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      padding: 12px 12px 12px 14px;
+      gap: 8px;
+      background: var(--app-bg);
+    }
+
+    .mode-bar {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      width: 100%;
+    }
+
+    .mode-bar__label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text);
+    }
+
+    .canvas-shell {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--nm-base);
+      box-shadow: var(--nm-raise-lg);
+      border: none;
+    }
+
+    .canvas-shell__chrome {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 28px;
+      background: var(--nm-base);
+      box-shadow: 0 3px 8px rgba(163, 177, 197, 0.2);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      z-index: 2;
+      pointer-events: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.65);
+    }
+
+    .canvas-shell__chrome .canvas-title {
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: none;
+    }
+
+    #draw-canvas {
+      position: absolute;
+      inset: 28px 0 0 0;
+      width: 100%;
+      height: calc(100% - 28px);
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+      background: var(--canvas-paper);
+      z-index: 1;
+    }
+
+    .panel__section--download {
+      margin-top: auto;
+      padding-top: 2px;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .bg-color-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bg-popover {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      background: var(--nm-base);
+      box-shadow: var(--ui-raise), var(--ui-inset);
+      z-index: 4;
+    }
+
+    .bg-popover[data-open="true"] {
+      display: flex;
+    }
+
+    .bg-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 5px;
+    }
+
+    .bg-swatch {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      padding: 0;
+      box-shadow: var(--ui-raise);
+      transition: box-shadow var(--dur-fast), transform 0.08s ease;
+    }
+
+    .bg-swatch:hover {
+      box-shadow: var(--ui-raise-hover);
+    }
+
+    .bg-swatch:active {
+      box-shadow: var(--ui-pressed);
+      transform: scale(0.95);
+    }
+
+    .bg-swatch[data-active="true"] {
+      box-shadow: var(--ui-inset-deep), 0 0 0 2px var(--accent);
+    }
+
+    .bg-swatch:focus {
+      outline: none;
+    }
+
+    .bg-swatch:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        flex-direction: column;
+        min-height: 100dvh;
+        max-height: 100dvh;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      .panel {
+        width: calc(100% - 16px);
+        max-width: none;
+        height: auto;
+        max-height: none;
+        flex: 0 0 auto;
+        border-radius: var(--radius);
+        margin: 8px;
+        padding: 8px 8px 10px;
+        gap: 6px;
+        overflow: visible;
+      }
+      .panel__title {
+        font-size: 9px;
+      }
+      .panel__section {
+        padding: 6px 7px;
+        gap: 5px;
+      }
+      .mirror-axis-btn {
+        min-height: 32px;
+        padding: 4px;
+      }
+      .swatch-grid {
+        gap: 5px;
+      }
+      .workspace {
+        flex: 1 1 0;
+        min-height: 0;
+        padding: 8px;
+        margin: 0 8px 8px;
+      }
+      :root {
+        --panel-w: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="panel" aria-label="Control panel">
+    <h1 class="panel__title">Control panel</h1>
+
+    <div class="panel__section">
+      <div class="panel__label">History</div>
+      <div class="tool-row">
+        <button type="button" class="tool-btn tool-btn--glyph" id="btn-undo" disabled aria-label="Undo" title="Undo">
+          <span class="tool-btn__glyph" aria-hidden="true">↶</span>
+        </button>
+        <button type="button" class="tool-btn tool-btn--glyph" id="btn-redo" disabled aria-label="Redo" title="Redo">
+          <span class="tool-btn__glyph" aria-hidden="true">↷</span>
+        </button>
+        <button type="button" class="tool-btn" id="btn-clear">Clear</button>
+      </div>
+    </div>
+
+    <div class="panel__section" aria-labelledby="palette-heading">
+      <div class="panel__label" id="palette-heading">Palette</div>
+      <div class="swatch-grid" id="swatches" role="radiogroup" aria-labelledby="palette-heading"></div>
+    </div>
+
+    <div class="panel__section">
+      <div class="panel__label">Brush</div>
+      <div class="slider-row">
+        <header>
+          <span class="panel__label" style="margin:0">Stroke width</span>
+          <span class="value" id="val-stroke">100%</span>
+        </header>
+        <input type="range" id="inp-stroke" min="50" max="180" value="100" />
+      </div>
+      <div class="slider-row slider-row--tight">
+        <header>
+          <span class="panel__label" style="margin:0">Spacing</span>
+          <span class="value" id="val-spacing">14</span>
+        </header>
+        <input type="range" id="inp-spacing" min="6" max="44" value="14" />
+      </div>
+    </div>
+
+    <div class="panel__section">
+      <fieldset class="mirror-fieldset">
+        <legend>Mirror</legend>
+        <button type="button" class="toggle" id="toggle-mirror" aria-pressed="false" data-on="false">
+          <span class="toggle__text" id="toggle-mirror-label">CENTER MIRROR</span>
+          <span class="toggle__switch" aria-hidden="true"></span>
+        </button>
+        <div class="mirror-axis-grid" id="mirror-axis-group" role="group" aria-label="Mirror guide lines through center — select one or more symmetries." aria-disabled="true">
+          <button type="button" class="mirror-axis-btn" role="checkbox" aria-checked="true" data-axis="vertical" id="axis-vertical" disabled aria-label="Vertical guide — toggle. Use with other guides for combined symmetry">
+            <svg class="mirror-axis-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <button type="button" class="mirror-axis-btn" role="checkbox" aria-checked="false" data-axis="horizontal" id="axis-horizontal" disabled aria-label="Horizontal guide — toggle">
+            <svg class="mirror-axis-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <button type="button" class="mirror-axis-btn" role="checkbox" aria-checked="false" data-axis="diag1" id="axis-diag1" disabled aria-label="Diagonal plus 45 degrees guide — toggle">
+            <svg class="mirror-axis-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <button type="button" class="mirror-axis-btn" role="checkbox" aria-checked="false" data-axis="diag2" id="axis-diag2" disabled aria-label="Diagonal minus 45 degrees guide — toggle">
+            <svg class="mirror-axis-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="panel__section panel__section--download">
+      <div class="bg-color-wrap">
+        <button type="button" class="tool-btn tool-btn--block" id="btn-bg-color" aria-expanded="false" aria-controls="bg-popover">
+          Background color
+        </button>
+        <div class="bg-popover" id="bg-popover" role="group" aria-label="Canvas background">
+          <div class="bg-grid" id="bg-grid"></div>
+        </div>
+      </div>
+      <button type="button" class="tool-btn tool-btn--block" id="btn-download" aria-label="Download canvas as PNG image">
+        Download PNG
+      </button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <div class="mode-bar">
+      <span class="mode-bar__label">Touch Grass</span>
+    </div>
+
+    <div class="canvas-shell" id="canvas-shell">
+      <div class="canvas-shell__chrome">
+        <span class="canvas-title">Canvas</span>
+      </div>
+      <canvas id="draw-canvas" width="800" height="600"></canvas>
+      <svg id="mirror-guide" class="mirror-guide" aria-hidden="true"></svg>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      let paperColor = "#eef2f7";
+      const EMOJI_MEMORY = 10;
+      const AXES_ORDER = ["vertical", "horizontal", "diag1", "diag2"];
+      const BG_SWATCHES = [
+        "#f8fafc", "#e2e8f0", "#cbd5e1", "#94a3b8", "#64748b", "#475569", "#0f172a", "#ffffff",
+        "#eef2f7", "#dbeafe", "#bfdbfe", "#60a5fa", "#2563eb", "#1e3a8a", "#e0f2fe", "#0891b2",
+        "#ecfdf5", "#bbf7d0", "#4ade80", "#15803d", "#fef9c3", "#fde047", "#ca8a04", "#fff7ed",
+        "#fed7aa", "#fb923c", "#ea580c", "#fef2f2", "#fecaca", "#f87171", "#dc2626", "#faf5ff",
+      ];
+      (function sortBgSwatchesLightToDark() {
+        function y709(hex) {
+          const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          if (!m) return 0;
+          const r = parseInt(m[1], 16);
+          const g = parseInt(m[2], 16);
+          const b = parseInt(m[3], 16);
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+        BG_SWATCHES.sort(function (a, b) {
+          return y709(b) - y709(a);
+        });
+      })();
+
+      const LANES = [
+        {
+          id: "white",
+          swatchClass: "swatch--bleach",
+          drawColor: "#b4bcc9",
+          color: "#ffffff",
+          swatchBg: "linear-gradient(148deg, #ffffff 0%, #dce8ef 45%, #b8cad6 100%)",
+          emojis: ["☁️", "❄️", "🌨️", "⛄", "🌫️", "🤍", "🕊️", "🦢", "🪿", "🥚", "🍚", "🐩", "💨"],
+        },
+        {
+          id: "yellow",
+          color: "#e5b80c",
+          swatchBg: "linear-gradient(145deg, #fef9c3 0%, #facc15 40%, #ca8a04 100%)",
+          emojis: ["☀️", "🌻", "🌼", "🌾", "🌕", "🐝", "🍋", "🌽", "🧀", "🍌", "⭐", "🌟", "✨"],
+        },
+        {
+          id: "green",
+          color: "#16a34a",
+          swatchBg: "linear-gradient(145deg, #d9f99d 0%, #4ade80 38%, #15803d 100%)",
+          emojis: ["🌿", "🍀", "🌳", "🌲", "🌱", "🪴", "🌴", "🎋", "🐸", "🦎", "🐢", "🥬", "🍏"],
+        },
+        {
+          id: "teal",
+          color: "#0f766e",
+          swatchBg: "linear-gradient(145deg, #5eead4 0%, #35b5ca 42%, #0e7490 100%)",
+          emojis: ["🐠", "🐡", "🐟", "🦑", "🐙", "🪸", "🐚", "🦀", "🪼", "🦞", "🏝️", "🦪", "🧜‍♀️"],
+        },
+        {
+          id: "blue",
+          color: "#1e40af",
+          swatchBg: "linear-gradient(145deg, #93c5fd 0%, #3b82f6 45%, #1e3a8a 100%)",
+          emojis: ["🌊", "🐳", "🐋", "🐬", "🦈", "🌈", "🌧️", "⚡", "🌩️", "🌀", "🌦️", "💧", "🧊"],
+        },
+        {
+          id: "purple",
+          color: "#6d28d9",
+          swatchBg: "linear-gradient(145deg, #d8b4fe 0%, #9333ea 48%, #4c1d95 100%)",
+          emojis: ["🪻", "🍇", "🍆", "🌌", "🌆", "🌃", "🌙", "🌉", "🦉", "🦋", "🌂", "☔", "🦄"],
+        },
+        {
+          id: "pink",
+          color: "#db2777",
+          swatchBg: "linear-gradient(145deg, #fbcfe8 0%, #ec4899 45%, #9d174d 100%)",
+          emojis: ["🌸", "💗", "💕", "💖", "💞", "💘", "💝", "🩷", "🌺", "🪷", "🌷", "🦩", "💋"],
+        },
+        {
+          id: "red",
+          color: "#dc2626",
+          swatchBg: "linear-gradient(145deg, #fecaca 0%, #ef4444 42%, #991b1b 100%)",
+          emojis: [
+            "❤️", "🌹", "🍎", "🍒", "🍓", "🌶️", "🍁", "❤️‍🔥", "💔", "❣️", "❤️‍🩹", "🫀", "🥀",
+            "🧡", "🌅", "🌄", "🦊", "🍊", "🍑", "🎃", "🍂", "🍯", "🥕", "🦁", "🐅", "🦧",
+          ],
+        },
+        {
+          id: "ink",
+          swatchClass: "swatch--ink",
+          drawColor: "#0a0a0a",
+          color: "#0a0a0a",
+          swatchBg: "linear-gradient(145deg, #3f3f46 0%, #18181b 55%, #09090b 100%)",
+          emojis: [
+            "🌑", "🌘", "🌚", "🐧", "🐦‍⬛", "🦇", "🕷️", "🦂", "🐜", "🐈‍⬛", "🦭", "🐺", "🦝",
+            "🪵", "🌰", "🦫", "🦌", "🐿️", "🪹", "🪺", "🤎", "🦬", "🐂", "🍄", "🦃", "🪨",
+          ],
+        },
+      ];
+
+      let activeLane = 0;
+
+      const emojiRecentByLane = LANES.map(function () { return []; });
+
+      let undoStack = [];
+      let redoStack = [];
+
+      let penContact = false;
+
+      const swatchesEl = document.getElementById("swatches");
+      const canvas = document.getElementById("draw-canvas");
+      const ctx = canvas.getContext("2d");
+      const shell = document.getElementById("canvas-shell");
+      const mirrorGuideSvg = document.getElementById("mirror-guide");
+
+      let mirrorPivotN = null;
+      let mirrorGuidePlaced = false;
+
+      const inpStroke = document.getElementById("inp-stroke");
+      const inpSpacing = document.getElementById("inp-spacing");
+      const valStroke = document.getElementById("val-stroke");
+      const valSpacing = document.getElementById("val-spacing");
+      const btnUndo = document.getElementById("btn-undo");
+      const btnRedo = document.getElementById("btn-redo");
+      const btnClear = document.getElementById("btn-clear");
+      const btnDownload = document.getElementById("btn-download");
+      const btnBgColor = document.getElementById("btn-bg-color");
+      const bgPopover = document.getElementById("bg-popover");
+      const bgGrid = document.getElementById("bg-grid");
+      const toggleMirror = document.getElementById("toggle-mirror");
+      const mirrorAxisGroup = document.getElementById("mirror-axis-group");
+      const axisBtns = mirrorAxisGroup.querySelectorAll(".mirror-axis-btn");
+
+      let mirrorOn = false;
+      const mirrorAxesActive = new Set();
+      mirrorAxesActive.add("vertical");
+
+      function activeAxesList() {
+        return AXES_ORDER.filter(function (a) {
+          return mirrorAxesActive.has(a);
+        });
+      }
+
+      function syncMirrorAxisButtons() {
+        axisBtns.forEach(function (btn) {
+          const ax = btn.getAttribute("data-axis");
+          const on = mirrorAxesActive.has(ax);
+          btn.dataset.active = on ? "true" : "false";
+          btn.setAttribute("aria-checked", on ? "true" : "false");
+        });
+      }
+
+      function toggleMirrorAxis(axis) {
+        if (mirrorAxesActive.has(axis)) mirrorAxesActive.delete(axis);
+        else mirrorAxesActive.add(axis);
+        if (mirrorAxesActive.size === 0) {
+          resetMirrorPlacement();
+        } else if (mirrorOn) {
+          if (!mirrorGuidePlaced || !mirrorPivotN) {
+            mirrorPivotN = { nx: 0.5, ny: 0.5 };
+            mirrorGuidePlaced = true;
+          }
+          updateMirrorGuideSVG();
+        }
+        syncMirrorAxisButtons();
+      }
+
+      function hexToRgb(hex) {
+        const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!m) return { r: 238, g: 242, b: 247 };
+        return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+      }
+
+      function matchesPaperRgb(r, g, b, paper) {
+        return r === paper.r && g === paper.g && b === paper.b;
+      }
+
+      function replacePaperTint(oldHex, newHex) {
+        const o = hexToRgb(oldHex);
+        const n = hexToRgb(newHex);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let i;
+        for (i = 0; i < img.data.length; i += 4) {
+          const r = img.data[i];
+          const g = img.data[i + 1];
+          const b = img.data[i + 2];
+          if (matchesPaperRgb(r, g, b, o)) {
+            img.data[i] = n.r;
+            img.data[i + 1] = n.g;
+            img.data[i + 2] = n.b;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+      }
+
+      function applyCanvasPaperCss() {
+        canvas.style.background = paperColor;
+        document.documentElement.style.setProperty("--canvas-paper", paperColor);
+      }
+
+      function syncBgGridActive() {
+        bgGrid.querySelectorAll(".bg-swatch").forEach(function (b) {
+          const on = b.getAttribute("data-hex") === paperColor;
+          b.dataset.active = on ? "true" : "false";
+        });
+      }
+
+      function setPaperFromPicker(hex) {
+        const prev = paperColor;
+        if (prev === hex) return;
+        replacePaperTint(prev, hex);
+        paperColor = hex;
+        applyCanvasPaperCss();
+        syncBgGridActive();
+        pushSnapshot();
+      }
+
+      function buildBgGrid() {
+        BG_SWATCHES.forEach(function (hex) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "bg-swatch";
+          b.style.background = hex;
+          b.dataset.hex = hex;
+          b.title = hex;
+          b.setAttribute("aria-label", "Set canvas background " + hex);
+          b.addEventListener("click", function () {
+            setPaperFromPicker(hex);
+          });
+          bgGrid.appendChild(b);
+        });
+        syncBgGridActive();
+      }
+
+      function laneDrawColor(lane) {
+        return lane.drawColor != null ? lane.drawColor : lane.color;
+      }
+
+      function getGap() {
+        return parseInt(inpSpacing.value, 10);
+      }
+
+      function getScalePct() {
+        return parseInt(inpStroke.value, 10);
+      }
+
+      function pickEmoji(laneIndex) {
+        const lane = LANES[laneIndex];
+        const recent = emojiRecentByLane[laneIndex];
+        const banned = {};
+        let i;
+        for (i = Math.max(0, recent.length - EMOJI_MEMORY); i < recent.length; i++) {
+          banned[recent[i]] = true;
+        }
+        const candidates = [];
+        for (i = 0; i < lane.emojis.length; i++) {
+          if (!banned[lane.emojis[i]]) candidates.push(lane.emojis[i]);
+        }
+        let choice;
+        if (candidates.length > 0) {
+          choice = candidates[Math.floor(Math.random() * candidates.length)];
+        } else {
+          const last = recent[recent.length - 1];
+          const fallback = lane.emojis.filter(function (e) { return e !== last; });
+          choice = fallback[Math.floor(Math.random() * fallback.length)] || lane.emojis[0];
+        }
+        recent.push(choice);
+        if (recent.length > EMOJI_MEMORY) recent.shift();
+        return choice;
+      }
+
+      function buildSwatches() {
+        LANES.forEach(function (lane, i) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "swatch" + (lane.swatchClass ? " " + lane.swatchClass : "");
+          if (lane.swatchBg) {
+            b.style.background = lane.swatchBg;
+          } else {
+            b.style.background = "";
+            b.style.backgroundColor = lane.color;
+          }
+          b.dataset.index = String(i);
+          b.setAttribute("role", "radio");
+          b.setAttribute("aria-checked", i === 0 ? "true" : "false");
+          b.setAttribute("aria-label", lane.id + " palette — press to draw with these emojis");
+          b.addEventListener("click", function () { setLane(i); });
+          swatchesEl.appendChild(b);
+        });
+        setLane(0);
+      }
+
+      function setLane(i) {
+        activeLane = Math.max(0, Math.min(LANES.length - 1, i));
+        swatchesEl.querySelectorAll(".swatch").forEach(function (el, idx) {
+          const on = idx === activeLane;
+          el.dataset.active = on ? "true" : "false";
+          el.setAttribute("aria-checked", on ? "true" : "false");
+          el.tabIndex = on ? 0 : -1;
+        });
+      }
+
+      function fillPaperDevicePixels() {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = paperColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      function resetUndoFromCanvas() {
+        undoStack = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+        redoStack = [];
+        updateUndoRedoBtns();
+      }
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        fillPaperDevicePixels();
+        resetUndoFromCanvas();
+        updateMirrorGuideSVG();
+      }
+
+      function updateUndoRedoBtns() {
+        btnUndo.disabled = undoStack.length <= 1;
+        btnRedo.disabled = redoStack.length === 0;
+      }
+
+      function pushSnapshot() {
+        if (undoStack.length > 36) undoStack.splice(1, 1);
+        undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        redoStack = [];
+        updateUndoRedoBtns();
+      }
+
+      function undo() {
+        if (undoStack.length <= 1) return;
+        redoStack.push(undoStack.pop());
+        ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+        updateUndoRedoBtns();
+      }
+
+      function redo() {
+        if (!redoStack.length) return;
+        const s = redoStack.pop();
+        undoStack.push(s);
+        ctx.putImageData(s, 0, 0);
+        updateUndoRedoBtns();
+      }
+
+      function clearAll() {
+        fillPaperDevicePixels();
+        resetUndoFromCanvas();
+      }
+
+      let drawing = false;
+      let lastX = 0;
+      let lastY = 0;
+      let strokeT = 0;
+      let strokeLen = 0;
+
+      function clearMirrorGuideSVG() {
+        mirrorGuideSvg.innerHTML = "";
+      }
+
+      function updateMirrorGuideSVG() {
+        clearMirrorGuideSVG();
+        if (!mirrorOn || !mirrorGuidePlaced || !mirrorPivotN) return;
+        const r = canvas.getBoundingClientRect();
+        const w = r.width;
+        const h = r.height;
+        mirrorGuideSvg.setAttribute("width", String(w));
+        mirrorGuideSvg.setAttribute("height", String(h));
+        mirrorGuideSvg.setAttribute("viewBox", "0 0 " + w + " " + h);
+        const mx = mirrorPivotN.nx * w;
+        const my = mirrorPivotN.ny * h;
+        const axes = activeAxesList();
+        let ai;
+        for (ai = 0; ai < axes.length; ai++) {
+          const axis = axes[ai];
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("stroke", "rgba(47, 59, 76, 0.52)");
+          line.setAttribute("stroke-width", "2");
+          line.setAttribute("stroke-dasharray", "7 6");
+          line.setAttribute("stroke-linecap", "round");
+          if (axis === "vertical") {
+            line.setAttribute("x1", String(mx));
+            line.setAttribute("y1", "0");
+            line.setAttribute("x2", String(mx));
+            line.setAttribute("y2", String(h));
+          } else if (axis === "horizontal") {
+            line.setAttribute("x1", "0");
+            line.setAttribute("y1", String(my));
+            line.setAttribute("x2", String(w));
+            line.setAttribute("y2", String(my));
+          } else {
+            const len = Math.max(w, h) * 2.5;
+            const uy = axis === "diag1" ? 1 / Math.SQRT2 : -1 / Math.SQRT2;
+            const ux = 1 / Math.SQRT2;
+            line.setAttribute("x1", String(mx - ux * len));
+            line.setAttribute("y1", String(my - uy * len));
+            line.setAttribute("x2", String(mx + ux * len));
+            line.setAttribute("y2", String(my + uy * len));
+          }
+          mirrorGuideSvg.appendChild(line);
+        }
+      }
+
+      function resetMirrorPlacement() {
+        mirrorPivotN = null;
+        mirrorGuidePlaced = false;
+        clearMirrorGuideSVG();
+      }
+
+      function getMirrorPivotPx() {
+        const r = canvas.getBoundingClientRect();
+        if (!mirrorPivotN) return null;
+        return { mx: mirrorPivotN.nx * r.width, my: mirrorPivotN.ny * r.height };
+      }
+
+      function mirrorPoint(x, y, mx, my, axis) {
+        const dx = x - mx;
+        const dy = y - my;
+        if (axis === "vertical") return [mx - dx, y];
+        if (axis === "horizontal") return [x, my - dy];
+        if (axis === "diag1") return [mx + dy, my + dx];
+        if (axis === "diag2") return [mx - dy, my - dx];
+        return [x, y];
+      }
+
+      function uniqueMirrorPositions(x, y, mx, my, axesList) {
+        const cell = 1.1;
+        const seen = {};
+        function cellKey(px, py) {
+          return String(Math.round(px / cell)) + "," + String(Math.round(py / cell));
+        }
+        const stack = [[x, y]];
+        const pts = [];
+        while (stack.length) {
+          const cur = stack.pop();
+          const cx = cur[0];
+          const cy = cur[1];
+          const k = cellKey(cx, cy);
+          if (seen[k]) continue;
+          seen[k] = true;
+          pts.push([cx, cy]);
+          let a;
+          for (a = 0; a < axesList.length; a++) {
+            const m = mirrorPoint(cx, cy, mx, my, axesList[a]);
+            const k2 = cellKey(m[0], m[1]);
+            if (!seen[k2]) stack.push(m);
+          }
+        }
+        return pts;
+      }
+
+      function drawEmojiAt(x, y, emoji, lane) {
+        const gap = getGap();
+        const scalePct = getScalePct();
+        const fontPx = (14 + gap * 0.28) * (scalePct / 100);
+        ctx.font = fontPx + "px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = laneDrawColor(lane);
+        ctx.fillText(emoji, x, y);
+      }
+
+      function placeEmoji(x, y) {
+        const lane = LANES[activeLane];
+        const emoji = pickEmoji(activeLane);
+        if (!mirrorOn || !mirrorGuidePlaced || mirrorAxesActive.size === 0) {
+          drawEmojiAt(x, y, emoji, lane);
+          return;
+        }
+        const piv = getMirrorPivotPx();
+        if (!piv) {
+          drawEmojiAt(x, y, emoji, lane);
+          return;
+        }
+        const axesList = activeAxesList();
+        const positions = uniqueMirrorPositions(x, y, piv.mx, piv.my, axesList);
+        let pi;
+        for (pi = 0; pi < positions.length; pi++) {
+          drawEmojiAt(positions[pi][0], positions[pi][1], emoji, lane);
+        }
+      }
+
+      function dist(ax, ay, bx, by) {
+        const dx = bx - ax;
+        const dy = by - ay;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function onDown(e) {
+        const p = point(e);
+        drawing = true;
+        penContact = true;
+        lastX = p.x;
+        lastY = p.y;
+        strokeT = 0;
+        strokeLen = 0;
+        placeEmoji(p.x, p.y);
+      }
+
+      function onMove(e) {
+        if (!drawing) return;
+        const p = point(e);
+        const d = dist(lastX, lastY, p.x, p.y);
+        strokeLen += d;
+        const gap = getGap();
+        let travel = strokeT + d;
+        while (travel >= gap) {
+          const step = gap - strokeT;
+          const ratio = d > 0 ? step / d : 0;
+          const sx = lastX + (p.x - lastX) * ratio;
+          const sy = lastY + (p.y - lastY) * ratio;
+          placeEmoji(sx, sy);
+          travel -= gap;
+          strokeT = 0;
+          lastX = sx;
+          lastY = sy;
+        }
+        strokeT = travel;
+        lastX = p.x;
+        lastY = p.y;
+      }
+
+      function onUp() {
+        drawing = false;
+        strokeT = 0;
+        if (penContact) {
+          pushSnapshot();
+          penContact = false;
+        }
+      }
+
+      function point(e) {
+        const r = canvas.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      }
+
+      buildSwatches();
+      buildBgGrid();
+      applyCanvasPaperCss();
+      new ResizeObserver(resizeCanvas).observe(shell);
+
+      swatchesEl.addEventListener("keydown", function (ev) {
+        const key = ev.key;
+        let delta = 0;
+        if (key === "ArrowRight" || key === "ArrowDown") delta = 1;
+        else if (key === "ArrowLeft" || key === "ArrowUp") delta = -1;
+        else return;
+        ev.preventDefault();
+        const n = LANES.length;
+        const next = (activeLane + delta + n) % n;
+        setLane(next);
+        const radios = swatchesEl.querySelectorAll(".swatch");
+        radios[next].focus();
+      });
+
+      inpStroke.addEventListener("input", function () {
+        valStroke.textContent = inpStroke.value + "%";
+      });
+      inpSpacing.addEventListener("input", function () {
+        valSpacing.textContent = inpSpacing.value;
+      });
+
+      btnUndo.addEventListener("click", function () { undo(); });
+      btnRedo.addEventListener("click", function () { redo(); });
+      btnClear.addEventListener("click", function () { clearAll(); });
+
+      function setBgPopoverOpen(open) {
+        bgPopover.dataset.open = open ? "true" : "false";
+        btnBgColor.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+
+      function downloadCanvasPng() {
+        const rect = canvas.getBoundingClientRect();
+        const cssW = Math.max(1, rect.width);
+        const cssH = Math.max(1, rect.height);
+        const padCss = 120;
+        const minBytes = 1048576;
+        const maxSide = 8192;
+        const exportMarginColor = "#ffffff";
+        let scale = 2;
+
+        function tryNext() {
+          let s = scale;
+          let pad = Math.round(padCss * s);
+          let iw = Math.round(cssW * s);
+          let ih = Math.round(cssH * s);
+          let ow = iw + pad * 2;
+          let oh = ih + pad * 2;
+          if (ow > maxSide || oh > maxSide) {
+            s *= maxSide / Math.max(ow, oh) * 0.999;
+            pad = Math.max(1, Math.round(padCss * s));
+            iw = Math.round(cssW * s);
+            ih = Math.round(cssH * s);
+            ow = iw + pad * 2;
+            oh = ih + pad * 2;
+          }
+          const out = document.createElement("canvas");
+          out.width = Math.max(1, ow);
+          out.height = Math.max(1, oh);
+          const octx = out.getContext("2d");
+          octx.fillStyle = exportMarginColor;
+          octx.fillRect(0, 0, out.width, out.height);
+          octx.imageSmoothingEnabled = true;
+          octx.imageSmoothingQuality = "high";
+          octx.drawImage(canvas, 0, 0, canvas.width, canvas.height, pad, pad, iw, ih);
+
+          out.toBlob(function (blob) {
+            if (!blob) return;
+            const bigEnough = blob.size >= minBytes;
+            const dim = Math.max(out.width, out.height);
+            const atCap = dim >= maxSide - 2;
+            if (bigEnough || scale >= 80 || atCap) {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.download = "touch-grass-canvas.png";
+              a.href = url;
+              a.rel = "noopener";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            } else {
+              scale += 2;
+              tryNext();
+            }
+          }, "image/png");
+        }
+        tryNext();
+      }
+
+      btnDownload.addEventListener("click", function () {
+        downloadCanvasPng();
+      });
+
+      btnBgColor.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const open = bgPopover.dataset.open !== "true";
+        setBgPopoverOpen(open);
+      });
+
+      document.addEventListener(
+        "click",
+        function (e) {
+          const t = e.target;
+          if (btnBgColor === t || btnBgColor.contains(t)) return;
+          if (bgPopover === t || bgPopover.contains(t)) return;
+          setBgPopoverOpen(false);
+        },
+        true
+      );
+
+      function setMirrorOn(on) {
+        mirrorOn = on;
+        toggleMirror.dataset.on = on ? "true" : "false";
+        toggleMirror.setAttribute("aria-pressed", on ? "true" : "false");
+        mirrorAxisGroup.setAttribute("aria-disabled", on ? "false" : "true");
+        axisBtns.forEach(function (btn) {
+          btn.disabled = !on;
+        });
+        if (!on) {
+          resetMirrorPlacement();
+        } else if (mirrorAxesActive.size > 0) {
+          mirrorPivotN = { nx: 0.5, ny: 0.5 };
+          mirrorGuidePlaced = true;
+          updateMirrorGuideSVG();
+        } else {
+          resetMirrorPlacement();
+        }
+      }
+
+      toggleMirror.addEventListener("click", function () {
+        setMirrorOn(!mirrorOn);
+      });
+
+      axisBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!mirrorOn || btn.disabled) return;
+          toggleMirrorAxis(btn.getAttribute("data-axis"));
+        });
+      });
+
+      canvas.addEventListener("pointerdown", function (e) {
+        try {
+          canvas.setPointerCapture(e.pointerId);
+        } catch (_) {}
+        onDown(e);
+      });
+      canvas.addEventListener("pointermove", onMove);
+      canvas.addEventListener("pointerup", onUp);
+      canvas.addEventListener("pointercancel", onUp);
+
+      valStroke.textContent = inpStroke.value + "%";
+      valSpacing.textContent = inpSpacing.value;
+      syncMirrorAxisButtons();
+      setMirrorOn(false);
+      resizeCanvas();
+    })();
+  </script>
+</body>
+</html>
